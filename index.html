@@ -121,7 +121,7 @@ h1.t1{font-size:24px;font-weight:700;letter-spacing:-0.02em;line-height:1.25}
 .kpi .two>div+div{border-left:1px solid #dcdcdf;padding-left:18px}
 .kpi .num{font-size:38px;margin:6px 0 2px}
 .bar{position:relative;height:6px;border-radius:3px;background:#dedee1;margin-top:16px}
-.bar i{position:absolute;left:0;top:0;bottom:0;border-radius:3px;background:var(--ink);transition:width .5s var(--ease-out)}
+.bar i{position:absolute;left:0;top:0;bottom:0;border-radius:3px;background:var(--ink);transition:width .5s var(--ease-out);transform-origin:left}
 .gm{display:grid;grid-template-columns:52px 1fr auto;align-items:center;min-height:58px;border-bottom:1px solid var(--line)}
 .gm:last-child{border-bottom:0}
 .gm .dt{font-size:14px;font-weight:600;line-height:1.2}
@@ -375,6 +375,23 @@ textarea:focus{outline:2px solid var(--ink);outline-offset:0;border-color:transp
 .menu svg{width:18px;height:18px;color:var(--ink-3)}
 .plus{background:var(--ink);color:#fff;border-radius:var(--r-card);padding:18px}
 .plus .tiny{color:#a9a9ad}
+/* ---------- motion: one entrance on first open, a quick fade between tabs, press feedback ---------- */
+.device{animation:deviceIn .6s var(--ease-out) both}
+@keyframes deviceIn{from{opacity:0;transform:translateY(16px) scale(.98)}to{opacity:1;transform:none}}
+.about>*{animation:rise .5s var(--ease-out) both}
+.about>:nth-child(2){animation-delay:40ms}.about>:nth-child(3){animation-delay:80ms}.about>:nth-child(4){animation-delay:120ms}
+.about>:nth-child(5){animation-delay:160ms}.about>:nth-child(6){animation-delay:200ms}.about>:nth-child(7){animation-delay:240ms}
+/* home cards arrive one after another, only while .intro is on (it comes off once they have landed) */
+.screen.intro .scroll>*{animation:rise .45s var(--ease-out) both}
+.screen.intro .scroll>:nth-child(1){animation-delay:200ms}.screen.intro .scroll>:nth-child(2){animation-delay:250ms}
+.screen.intro .scroll>:nth-child(3){animation-delay:300ms}.screen.intro .scroll>:nth-child(4){animation-delay:350ms}
+.screen.intro .scroll>:nth-child(5){animation-delay:400ms}.screen.intro .scroll>:nth-child(6){animation-delay:450ms}
+.screen.intro .scroll>:nth-child(7){animation-delay:500ms}
+.screen.tab-in{animation:tabIn .22s var(--ease-out) both}
+@keyframes tabIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.tab svg,.fab,.seg button,.more{transition:transform .12s var(--ease-out)}
+.tab:active svg{transform:scale(.88)}
+.fab:active,.seg button:active,.more:active{transform:scale(.96)}
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
 }
@@ -821,6 +838,7 @@ function render() {
 }
 function setTab(t) {
   U.tab = t; stackEl.innerHTML = ''; stack = [{ name: t, el: mount(t, false) }]; render();
+  stack[0].el.classList.add('tab-in');
 }
 function push(name) {
   const el = mount(name, true); stack.push({ name, el }); render();
@@ -838,6 +856,28 @@ function toast(msg, stamp) {
   const t = document.getElementById('toast');
   t.innerHTML = (stamp ? `<span class="dot">${stamp}</span>` : '') + `<span>${msg}</span>`;
   t.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('on'), 2600);
+}
+// the moment a record lands on home: the numbers count up from where they were, the bar grows, the new game slides in
+const EASE_OUT = 'cubic-bezier(0.23, 1, 0.32, 1)';
+const calm = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+function countUp(el, from, to, digits, unit) {
+  const t0 = performance.now(), dur = 700;
+  const step = (now) => {
+    const k = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - k, 3);
+    el.innerHTML = `${(from + (to - from) * e).toFixed(digits)}<small>${unit}</small>`;
+    if (k < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+function land(before, date) {
+  if (calm() || stack[0].name !== 'home') return;
+  const el = stack[0].el, after = stats();
+  const nums = el.querySelectorAll('.kpi .num'), bar = el.querySelector('.kpi .bar i');
+  countUp(nums[0], before.n, after.n, 0, '회');
+  countUp(nums[1], +pct(before.rate), +pct(after.rate), 1, '%');
+  if (bar && after.rate) bar.animate([{ transform: `scaleX(${before.rate / after.rate})` }, { transform: 'none' }], { duration: 700, easing: EASE_OUT });
+  const row = [...el.querySelectorAll('.gm')].find((g) => g.querySelector('.dt').textContent.startsWith(md(date)));
+  if (row) row.animate([{ opacity: 0, transform: 'translateY(-8px)' }, { opacity: 1, transform: 'none' }], { duration: 400, delay: 150, easing: EASE_OUT, fill: 'backwards' });
 }
 function openSheet(html) { document.getElementById('sheetBody').innerHTML = `<div class="grab"></div>${html}`; document.getElementById('sheet').classList.add('open'); }
 function closeSheet() { document.getElementById('sheet').classList.remove('open'); }
@@ -860,6 +900,7 @@ const A = {
     const newBadges = badges(after).filter((b, i) => b.got && !badges(before)[i].got).map((b) => b.nm);
     U.scan = 'idle'; U.newStamp = newPark ? t.park : null;
     back();
+    setTimeout(() => land(before, t.date), 200);
     setTimeout(() => {
       if (newPark) toast(`${t.park} 도장을 찍었어요! 전국 ${after.visited.length}곳째`, t.park);
       else toast(`기록했어요. 직관 승률 ${pct(after.rate)}%`);
@@ -951,6 +992,7 @@ window.addEventListener('resize', fit); fit();
 const tick = () => { const d = new Date(); document.getElementById('clock').textContent = `${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`; };
 tick(); setInterval(tick, 20000);
 setTab('home');
+{ const first = stack[0].el; first.classList.replace('tab-in', 'intro'); setTimeout(() => first.classList.remove('intro'), 1100); }
 </script>
 </body>
 </html>
