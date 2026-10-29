@@ -710,7 +710,7 @@ const SCREENS = {
     const st = stats(), bs = badges(st);
     return `<div class="scroll"><div class="me-top"><span class="av">나</span><div><div style="font-size:19px;font-weight:700">LG 직관러</div><div class="sub" style="margin-top:2px">2026 시즌 ${st.n}번 직관 · 배지 ${bs.filter((b) => b.got).length}개</div></div></div>
       <div class="plus" style="margin-top:18px"><div class="row"><div><div style="font-weight:700;font-size:16px">FAN STATS 플러스</div><div class="tiny" style="margin-top:2px">자세한 시즌 결산 · 기록 굿즈 할인 · 광고 없이 · 구독자 배지</div></div></div>
-        <div class="row" style="margin-top:14px"><span style="font-size:15px;font-weight:700">월 4,900원</span>${S.plus ? '<span class="pill" style="background:#fff;color:#111">구독 중</span>' : '<button class="btn small" style="background:#fff;color:#111" data-act="plus">구독하기</button>'}</div></div>
+        <div class="row" style="margin-top:14px"><span style="font-size:15px;font-weight:700">월 3,900원<span style="font-size:13px;font-weight:500;color:#a9a9ad"> · 시즌권 24,900원</span></span>${S.plus ? '<span class="pill" style="background:#fff;color:#111">구독 중</span>' : '<button class="btn small" style="background:#fff;color:#111" data-act="plus">구독하기</button>'}</div></div>
       <div class="sec"><div class="sec-h"><h2>배지</h2><span class="more">${bs.filter((b) => b.got).length} / ${bs.length}</span></div>
         <div class="badges">${bs.map((b) => `<div class="badge ${b.got ? 'got' : 'lock'}"><div class="medal">${b.g}</div><div class="nm">${b.nm}</div><div class="ds">${b.ds}</div>${b.got || !b.need ? '' : `<div class="prog"><i style="width:${Math.min(100, (b.have / b.need) * 100)}%"></i></div>`}</div>`).join('')}</div></div>
       <div class="sec menu">
@@ -808,7 +808,7 @@ const SCREENS = {
       <div class="sec" style="margin-top:22px"><div class="sec-h"><h2>자세한 결산</h2><span class="more">플러스</span></div>
         <div class="lockbox"><div class="card dtab"><div class="tr tiny"><span>상대 팀</span><span class="c">승</span><span class="c">패</span></div>
           ${opp.map(([o, [w, l]]) => `<div class="tr"><span>vs ${o}</span><span class="c">${w}</span><span class="c">${l}</span></div>`).join('')}</div>
-          ${S.plus ? '' : `<div class="veil">${ic('lock', 'style="width:22px;height:22px;color:var(--ink)"')}<span>구독하면 상대 팀별·구장별·선수별<br>리포트를 볼 수 있어요</span><button class="btn small" data-act="plus">월 4,900원 구독하기</button></div>`}</div></div></div>`;
+          ${S.plus ? '' : `<div class="veil">${ic('lock', 'style="width:22px;height:22px;color:var(--ink)"')}<span>구독하면 상대 팀별·구장별·선수별<br>리포트를 볼 수 있어요</span><button class="btn small" data-act="plus">월 3,900원 구독하기</button></div>`}</div></div></div>`;
   },
 };
 
@@ -927,7 +927,7 @@ const A = {
       <button class="btn" style="margin-top:16px" data-act="orderDone">주문하기 (시연)</button>`);
   },
   orderDone: () => { S.orders++; save(); closeSheet(); toast('주문을 받았어요. 실제 제작·배송은 되지 않아요 (시연)'); },
-  plus: () => openSheet(`<h2>FAN STATS 플러스</h2><div class="sub">월 4,900원 · 시연용이라 실제 결제는 되지 않아요</div>
+  plus: () => openSheet(`<h2>FAN STATS 플러스</h2><div class="sub">월 3,900원 · 시즌권(3~10월) 24,900원 · 시연용이라 실제 결제는 되지 않아요</div>
     <div style="margin-top:12px;display:grid;gap:8px;font-size:15px">${['자세한 시즌 결산 (상대 팀별·구장별·선수별)', '기록 굿즈 할인', '광고 없이 쓰기', '구독자 배지'].map((t) => `<div class="row" style="justify-content:flex-start">${ic('check', 'style="width:18px;height:18px;flex:none"')}${t}</div>`).join('')}</div>
     <button class="btn" style="margin-top:18px" data-act="plusDone">구독하기 (시연)</button>`),
   plusDone: () => { S.plus = true; save(); closeSheet(); render(); toast('플러스 구독을 시작했어요 (시연)'); },
